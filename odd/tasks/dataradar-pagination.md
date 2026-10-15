@@ -24,11 +24,11 @@ Dark-first, español neutro/profesional, sin `any`, Next 14 (searchParams es obj
 
 ## Acciones
 
-- [ ] T1 — Capa de datos: `getVacanciesPage` y `getCompaniesPage` (Supabase `.range()` + count exacto + resolución de stack por página; fallback mocks filtrados en memoria). Tipos `VacancyFilters` y `Paginated<T>`.
-- [ ] T2 — `Pagination` reutilizable (Links preservando params, elipsis, selector de tamaño, contador).
-- [ ] T3 — Rewrite `vacancy-explorer` a URL-driven (debounce en búsqueda, selects→URL, scroll top, estado vacío).
-- [ ] T4 — Páginas server: `/vacantes` parsea searchParams; `/empresas` con paginación.
-- [ ] T5 — Cierre: `tsc` + `build` en verde, commit + push.
+- [x] T1 — Capa de datos: `getVacanciesPage` y `getCompaniesPage` (Supabase `.range()` + count exacto + resolución de stack por página; fallback mocks filtrados en memoria). Tipos `VacancyFilters` y `Paginated<T>`.
+- [x] T2 — `Pagination` reutilizable (Links preservando params, elipsis, selector de tamaño, contador).
+- [x] T3 — Rewrite `vacancy-explorer` a URL-driven (debounce en búsqueda, selects→URL, scroll top, estado vacío).
+- [x] T4 — Páginas server: `/vacantes` parsea searchParams; `/empresas` con paginación.
+- [x] T5 — Cierre: `tsc` + `build` en verde, commit + push.
 
 ## Criterios de aceptación
 - `/vacantes?page=2&size=24&block=colombia&tech=SQL&min=1&mode=remote_full&status=active` filtra y pagina del lado del server.
@@ -43,4 +43,6 @@ Dark-first, español neutro/profesional, sin `any`, Next 14 (searchParams es obj
 - `ask-on-risk`. Un commit work-unit + push.
 
 ## Progreso / evidencia
-- (pendiente)
+- T1–T5 completados. `tsc --noEmit` y `next build` OK (`/vacantes` y `/empresas` → dinámicas `ƒ`).
+- Prueba funcional con data real (dev server): size=12 → 1–12/18 y 13–18/18; block=colombia → 6/6; tech=SQL → 13; min=3 → 5; q=Data → 16; empresas 1–12/15 y 13–15/15.
+- Commit `aa313c0` pusheado.

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { VacancyWithStack } from "@/lib/types";
 import Chip from "./chip";
 import { StatusBadge, WorkModeBadge } from "./badge";
@@ -22,7 +23,15 @@ export default function VacancyCard({ vacancy }: { vacancy: VacancyWithStack }) 
     <article className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 transition-colors hover:bg-surface-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-semibold leading-snug">{vacancy.title}</h3>
+          <h3 className="font-semibold leading-snug">
+            <Link
+              href={`/vacantes/${vacancy.id}`}
+              title="Ver detalle"
+              className="transition-colors hover:text-primary"
+            >
+              {vacancy.title}
+            </Link>
+          </h3>
           <p className="mt-1 truncate text-sm text-text-muted">
             {vacancy.company_name ?? "Empresa"}
           </p>

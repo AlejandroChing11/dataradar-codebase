@@ -135,6 +135,43 @@ export async function getTechnologies(): Promise<Technology[]> {
   return mockTechnologies;
 }
 
+export async function getVacancyById(id: string): Promise<VacancyWithStack | null> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("vacancies")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (!error && data) {
+        const [withStack] = await resolveStacks(supabase, [data as Vacancy]);
+        return withStack ?? null;
+      }
+    } catch {
+      // Cae al fallback de mocks.
+    }
+  }
+  return getMockVacanciesWithStack().find((v) => v.id === id) ?? null;
+}
+
+export async function getCompanyById(id: string): Promise<Company | null> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (!error && data) return data as Company;
+    } catch {
+      // Cae al fallback de mocks.
+    }
+  }
+  return mockCompanies.find((c) => c.id === id) ?? null;
+}
+
 export interface DashboardStats {
   activeVacancies: number;
   newToday: number;
