@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== DataRadar — paleta (dark-first) =====
+   Concepto: pantalla de radar — navy profundo + teal del barrido + ámbar. */
+:root {
+  --bg: #0b1220;
+  --surface: #131c2e;
+  --surface-2: #1b2740;
+  --border: #26324c;
+  --text: #e8eef7;
+  --text-muted: #93a1b8;
+  --primary: #2dd4bf;
+  --primary-strong: #14b8a6;
+  --accent: #f5a623;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #60a5fa;
+  color-scheme: dark;
+}
+
+/* Modo claro: cuando el usuario lo pide explícitamente (data-theme="light")
+   o cuando el sistema está en claro y no hay override. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f7f9fc;
+    --surface: #ffffff;
+    --surface-2: #eef2f8;
+    --border: #dce3ee;
+    --text: #0f1b2d;
+    --text-muted: #5a6b82;
+    --primary: #14b8a6;
+    --primary-strong: #0d9488;
+    --accent: #d98a00;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f7f9fc;
+  --surface: #ffffff;
+  --surface-2: #eef2f8;
+  --border: #dce3ee;
+  --text: #0f1b2d;
+  --text-muted: #5a6b82;
+  --primary: #14b8a6;
+  --primary-strong: #0d9488;
+  --accent: #d98a00;
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+* {
+  border-color: var(--border);
+}
