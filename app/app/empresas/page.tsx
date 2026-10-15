@@ -2,6 +2,8 @@ import { getCompanies } from "@/lib/data";
 import type { Company } from "@/lib/types";
 import { Badge } from "@/components/badge";
 
+export const revalidate = 3600; // Refresca el radar cada hora (ISR)
+
 interface Signals {
   level: string;
   source: string;

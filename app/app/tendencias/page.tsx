@@ -11,6 +11,8 @@ import type { Block } from "@/lib/types";
 import BarChart from "@/components/charts/bar-chart";
 import Section from "@/components/section";
 
+export const revalidate = 3600; // Refresca el radar cada hora (ISR)
+
 const BLOCK_LABEL: Record<Block, string> = {
   colombia: "Colombia",
   rest: "Resto",

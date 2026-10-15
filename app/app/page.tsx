@@ -5,6 +5,8 @@ import DonutChart from "@/components/charts/donut-chart";
 import LineChart from "@/components/charts/line-chart";
 import Section from "@/components/section";
 
+export const revalidate = 3600; // Refresca el radar cada hora (ISR)
+
 const BLOCK_COLORS: Record<string, string> = {
   colombia: "var(--accent)",
   rest: "var(--primary)",

@@ -47,5 +47,8 @@ Auth, escritura desde el front, seed de datos (las tablas siguen vacías → moc
 
 ## Progreso / evidencia
 - T1–T5 completados. `npx tsc --noEmit` OK y `npm run build` OK (8 rutas estáticas).
-- `getSupabase()` ya lee la publishable key con fallback de 3 nombres; `lib/data.ts` resuelve el stack real desde las 3 tablas.
-- Verificación real contra Supabase pendiente: las tablas `dataradar_schema` siguen vacías → mock fallback. Falta seed para ver datos reales.
+- `getSupabase()` lee la publishable key con fallback de 3 nombres; `lib/data.ts` resuelve el stack real desde las 3 tablas.
+- Diagnóstico (con MCP de Supabase): había data real (18 vacantes, 15 empresas, 51 tecnologías, 125 puentes) y RLS con policy `public_read` correcta, pero **faltaban grants** — `anon`/`authenticated` sin USAGE del schema ni SELECT. PostgREST devolvía `42501 permission denied for schema`.
+- Fix DB-side (migración `dataradar_expose_readonly_schema`): `GRANT USAGE ON SCHEMA` + `GRANT SELECT` de las 4 tablas del front a `anon`/`authenticated`/`authenticator`.
+- Verificación end-to-end: REST 200 con data real; `npm run build` prerenderiza empresas/vacantes con data real (EPAM/Datly), sin mocks.
+- Revalidación ISR (`revalidate = 3600`) en las 4 páginas para no congelar la data en producción.

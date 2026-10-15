@@ -1,6 +1,8 @@
 import { getTechnologies, getVacancies } from "@/lib/data";
 import VacancyExplorer from "@/components/vacancy-explorer";
 
+export const revalidate = 3600; // Refresca el radar cada hora (ISR)
+
 export default async function VacantesPage() {
   const [vacancies, technologies] = await Promise.all([getVacancies(), getTechnologies()]);
 
