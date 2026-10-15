@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Technology, VacancyWithStack } from "@/lib/types";
+import type { VacancyFilters } from "@/lib/data";
 import VacancyCard from "./vacancy-card";
 import { WORK_MODE_META } from "./badge";
 import Select, { type SelectOption } from "./select";
-
-type BlockFilter = "all" | "colombia" | "rest";
-type StatusFilter = "all" | "active" | "inactive";
+import Pagination from "./pagination";
 
 const YEAR_OPTIONS = ["all", "0", "1", "2", "3", "4", "5"];
 
@@ -44,17 +44,23 @@ const MODE_OPTIONS: SelectOption[] = [
 export default function VacancyExplorer({
   vacancies,
   technologies,
+  total,
+  page,
+  perPage,
+  totalPages,
+  filters,
 }: {
   vacancies: VacancyWithStack[];
   technologies: Technology[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+  filters: VacancyFilters;
 }) {
-  const [query, setQuery] = useState("");
-  const [block, setBlock] = useState<BlockFilter>("all");
-  const [tech, setTech] = useState("all");
-  const [minYears, setMinYears] = useState("all");
-  const [maxYears, setMaxYears] = useState("all");
-  const [mode, setMode] = useState("all");
-  const [status, setStatus] = useState<StatusFilter>("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const techOptions = useMemo<SelectOption[]>(
     () => [
@@ -66,35 +72,44 @@ export default function VacancyExplorer({
     [technologies],
   );
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return vacancies.filter((v) => {
-      if (q) {
-        const hay = `${v.title} ${v.company_name ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      if (block !== "all" && v.block !== block) return false;
-      if (tech !== "all" && !v.technologies.some((t) => t.name === tech)) return false;
-      if (minYears !== "all" && (v.years_min ?? 0) < Number(minYears)) return false;
-      if (maxYears !== "all" && v.years_max !== null && v.years_max > Number(maxYears)) {
-        return false;
-      }
-      if (mode !== "all" && v.work_mode !== mode) return false;
-      if (status === "active" && !v.is_active) return false;
-      if (status === "inactive" && v.is_active) return false;
-      return true;
-    });
-  }, [vacancies, query, block, tech, minYears, maxYears, mode, status]);
-
-  function resetFilters() {
-    setQuery("");
-    setBlock("all");
-    setTech("all");
-    setMinYears("all");
-    setMaxYears("all");
-    setMode("all");
-    setStatus("all");
+  // Aplica un patch sobre los searchParams actuales. `null` borra la key.
+  function updateParams(patch: Record<string, string | null>) {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === null) params.delete(key);
+      else params.set(key, value);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
+
+  // Draft local de la búsqueda (responsive al tipear) sincronizado con filters.query.
+  const [query, setQuery] = useState(filters.query ?? "");
+
+  useEffect(() => {
+    setQuery(filters.query ?? "");
+  }, [filters.query]);
+
+  // Debounce de 300ms: empuja el término a la URL al dejar de escribir.
+  useEffect(() => {
+    const term = query.trim();
+    if (term === (filters.query ?? "").trim()) return;
+    const handler = setTimeout(() => {
+      updateParams({ q: term || null, page: null });
+    }, 300);
+    return () => clearTimeout(handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, filters.query]);
+
+  // Al cambiar de página, volvemos arriba (salvo el primer render).
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [page]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -113,8 +128,8 @@ export default function VacancyExplorer({
         <div className="flex flex-col gap-1 text-xs text-text-muted">
           <span>Bloque</span>
           <Select
-            value={block}
-            onChange={(v) => setBlock(v as BlockFilter)}
+            value={filters.block ?? "all"}
+            onChange={(v) => updateParams({ block: v === "all" ? null : v, page: null })}
             options={BLOCK_OPTIONS}
             ariaLabel="Filtrar por bloque"
           />
@@ -123,8 +138,8 @@ export default function VacancyExplorer({
         <div className="flex flex-col gap-1 text-xs text-text-muted">
           <span>Tecnología</span>
           <Select
-            value={tech}
-            onChange={setTech}
+            value={filters.tech ?? "all"}
+            onChange={(v) => updateParams({ tech: v === "all" ? null : v, page: null })}
             options={techOptions}
             ariaLabel="Filtrar por tecnología"
           />
@@ -133,8 +148,8 @@ export default function VacancyExplorer({
         <div className="flex flex-col gap-1 text-xs text-text-muted">
           <span>Años mín.</span>
           <Select
-            value={minYears}
-            onChange={setMinYears}
+            value={filters.minYears !== undefined ? String(filters.minYears) : "all"}
+            onChange={(v) => updateParams({ min: v === "all" ? null : v, page: null })}
             options={MIN_YEAR_OPTIONS}
             ariaLabel="Filtrar por años mínimos"
           />
@@ -143,8 +158,8 @@ export default function VacancyExplorer({
         <div className="flex flex-col gap-1 text-xs text-text-muted">
           <span>Años máx.</span>
           <Select
-            value={maxYears}
-            onChange={setMaxYears}
+            value={filters.maxYears !== undefined ? String(filters.maxYears) : "all"}
+            onChange={(v) => updateParams({ max: v === "all" ? null : v, page: null })}
             options={MAX_YEAR_OPTIONS}
             ariaLabel="Filtrar por años máximos"
           />
@@ -153,8 +168,8 @@ export default function VacancyExplorer({
         <div className="flex flex-col gap-1 text-xs text-text-muted">
           <span>Modalidad</span>
           <Select
-            value={mode}
-            onChange={setMode}
+            value={filters.mode ?? "all"}
+            onChange={(v) => updateParams({ mode: v === "all" ? null : v, page: null })}
             options={MODE_OPTIONS}
             ariaLabel="Filtrar por modalidad"
           />
@@ -163,8 +178,8 @@ export default function VacancyExplorer({
         <div className="flex flex-col gap-1 text-xs text-text-muted">
           <span>Estado</span>
           <Select
-            value={status}
-            onChange={(v) => setStatus(v as StatusFilter)}
+            value={filters.status ?? "all"}
+            onChange={(v) => updateParams({ status: v === "all" ? null : v, page: null })}
             options={STATUS_OPTIONS}
             ariaLabel="Filtrar por estado"
           />
@@ -173,28 +188,35 @@ export default function VacancyExplorer({
 
       <div className="flex items-center justify-between text-sm text-text-muted">
         <p>
-          {filtered.length} resultado{filtered.length === 1 ? "" : "s"}
+          {total} resultado{total === 1 ? "" : "s"}
         </p>
         <button
           type="button"
-          onClick={resetFilters}
+          onClick={() => router.replace(pathname)}
           className="text-sm text-primary hover:text-primary-strong"
         >
           Limpiar filtros
         </button>
       </div>
 
-      {filtered.length === 0 ? (
+      {total === 0 ? (
         <div className="rounded-xl border border-border bg-surface p-10 text-center text-text-muted">
           No hay vacantes que coincidan con los filtros seleccionados.
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((v) => (
+          {vacancies.map((v) => (
             <VacancyCard key={v.id} vacancy={v} />
           ))}
         </div>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        perPage={perPage}
+      />
     </div>
   );
 }

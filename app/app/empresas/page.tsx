@@ -1,8 +1,29 @@
-import { getCompanies } from "@/lib/data";
+import { getCompaniesPage } from "@/lib/data";
 import type { Company } from "@/lib/types";
 import { Badge } from "@/components/badge";
+import Pagination from "@/components/pagination";
 
 export const revalidate = 3600; // Refresca el radar cada hora (ISR)
+
+const PAGE_SIZES: number[] = [12, 24, 48];
+const DEFAULT_SIZE = 12;
+
+type SearchParams = { [key: string]: string | string[] | undefined };
+
+function first(raw: string | string[] | undefined): string | undefined {
+  return Array.isArray(raw) ? raw[0] : raw;
+}
+
+function parsePage(raw: string | string[] | undefined): number {
+  const value = first(raw);
+  return Math.max(1, parseInt(value ?? "", 10) || 1);
+}
+
+function parseSize(raw: string | string[] | undefined): number {
+  const value = first(raw);
+  const n = Number(value);
+  return PAGE_SIZES.includes(n) ? n : DEFAULT_SIZE;
+}
 
 interface Signals {
   level: string;
@@ -95,8 +116,14 @@ function CompanyCard({ company }: { company: Company }) {
   );
 }
 
-export default async function EmpresasPage() {
-  const companies = await getCompanies();
+export default async function EmpresasPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const page = parsePage(searchParams.page);
+  const size = parseSize(searchParams.size);
+  const result = await getCompaniesPage(page, size);
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,10 +135,17 @@ export default async function EmpresasPage() {
       </header>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {companies.map((c) => (
+        {result.items.map((c) => (
           <CompanyCard key={c.id} company={c} />
         ))}
       </div>
+
+      <Pagination
+        page={result.page}
+        totalPages={result.totalPages}
+        total={result.total}
+        perPage={result.perPage}
+      />
     </div>
   );
 }
