@@ -27,11 +27,11 @@ Auth, escritura desde front, pipeline de ingesta, notificaciones.
 
 ## Acciones (checklist)
 
-- [ ] T1 — Fundación: instalar `geist`, cablear Geist Sans/Mono en `app/app/layout.tsx`, shell de navegación (logo + links) y metadata.
-- [ ] T2 — Capa de datos: `lib/mock-data.ts` (vacantes ~18, empresas ~9, tecnologías, puente, helper `VacancyWithStack`), `lib/data.ts` (acceso Supabase→mock), `lib/supabase.ts` sin throw al import.
-- [ ] T3 — Componentes UI: nav, kpi-card, vacancy-card, chips/badges, y charts SVG (bar/line/donut).
-- [ ] T4 — Vistas: Dashboard, Vacantes (filtros/búsqueda client-side), Empresas, Tendencias.
-- [ ] T5 — Cierre: responsive, metadata/favicon, `next build` y `tsc` en verde, commit work-unit.
+- [x] T1 — Fundación: instalar `geist`, cablear Geist Sans/Mono en `app/app/layout.tsx`, shell de navegación (logo + links) y metadata.
+- [x] T2 — Capa de datos: `lib/mock-data.ts` (vacantes ~18, empresas ~9, tecnologías, puente, helper `VacancyWithStack`), `lib/data.ts` (acceso Supabase→mock), `lib/supabase.ts` sin throw al import.
+- [x] T3 — Componentes UI: nav, kpi-card, vacancy-card, chips/badges, y charts SVG (bar/line/donut).
+- [x] T4 — Vistas: Dashboard, Vacantes (filtros/búsqueda client-side), Empresas, Tendencias.
+- [x] T5 — Cierre: responsive, metadata/favicon, `next build` y `tsc` en verde, commit work-unit.
 
 ## Criterios de aceptación
 - `npm run build` termina OK en `app/` sin errores TS.
@@ -48,4 +48,7 @@ Auth, escritura desde front, pipeline de ingesta, notificaciones.
 - Un solo commit work-unit inicial sobre la rama principal (primer commit del repo).
 
 ## Progreso / evidencia
-- (pendiente)
+- T1–T5 completados. `npx tsc --noEmit` OK (exit 0) y `npm run build` OK (8 rutas estáticas prerenderizadas, Next 14.2.35).
+- Commit work-unit: `0c1cbb9` en `main`, pusheado a `origin` (repo `AlejandroChing11/dataradar-codebase`).
+- Revisión nativa (RDD): `gentle-ai review assess` → `unassessable` (runtime OpenCode no elegible para review inmutable; la versión instalada solo soporta `claude-code`/`codex`). RDD sigue `on` (default) — decisión del usuario si desactivar o revisar en runtime soportado.
+- Datos reales de Supabase pendientes (tablas `dataradar_schema` vacías); la capa `lib/data.ts` conmuta a mocks hasta que haya filas.
