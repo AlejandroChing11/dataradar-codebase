@@ -34,6 +34,8 @@ function parseNumber(raw: string | string[] | undefined): number | undefined {
 function parseFilters(searchParams: SearchParams): VacancyFilters {
   const block = first(searchParams.block);
   const status = first(searchParams.status);
+  const lang = first(searchParams.lang);
+  const portal = first(searchParams.portal);
   return {
     query: first(searchParams.q) || undefined,
     block: block === "colombia" || block === "rest" ? block : undefined,
@@ -42,6 +44,11 @@ function parseFilters(searchParams: SearchParams): VacancyFilters {
     maxYears: parseNumber(searchParams.max),
     mode: first(searchParams.mode) || undefined,
     status: status === "active" || status === "inactive" ? status : undefined,
+    language: lang === "ingles" || lang === "no_ingles" ? lang : undefined,
+    portal:
+      portal === "linkedin" || portal === "teamtailor" || portal === "tecnoempleo"
+        ? portal
+        : undefined,
   };
 }
 

@@ -1,5 +1,6 @@
 import type {
   Company,
+  Discard,
   Technology,
   Vacancy,
   VacancyTechnology,
@@ -9,6 +10,7 @@ import { getSupabase } from "./supabase";
 import {
   getMockVacanciesWithStack,
   mockCompanies,
+  mockDiscards,
   mockTechnologies,
 } from "./mock-data";
 import {
@@ -117,6 +119,21 @@ async function tryTechnologies(): Promise<Technology[] | null> {
   }
 }
 
+async function tryDiscards(): Promise<Discard[] | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("discards")
+      .select("*")
+      .order("discard_date", { ascending: false });
+    if (error || !data || data.length === 0) return null;
+    return data as Discard[];
+  } catch {
+    return null;
+  }
+}
+
 export async function getVacancies(): Promise<VacancyWithStack[]> {
   const fromSupabase = await tryVacancies();
   if (fromSupabase) return fromSupabase;
@@ -133,6 +150,12 @@ export async function getTechnologies(): Promise<Technology[]> {
   const fromSupabase = await tryTechnologies();
   if (fromSupabase) return fromSupabase;
   return mockTechnologies;
+}
+
+export async function getDiscards(): Promise<Discard[]> {
+  const fromSupabase = await tryDiscards();
+  if (fromSupabase) return fromSupabase;
+  return mockDiscards;
 }
 
 export async function getVacancyById(id: string): Promise<VacancyWithStack | null> {
@@ -210,6 +233,8 @@ export interface VacancyFilters {
   maxYears?: number;
   mode?: string; // valor de work_mode
   status?: "active" | "inactive";
+  language?: "ingles" | "no_ingles";
+  portal?: string; // "linkedin" | "teamtailor" | "tecnoempleo"
 }
 
 export interface Paginated<T> {
@@ -255,6 +280,13 @@ export function filterVacancies(
     if (filters.mode && v.work_mode !== filters.mode) return false;
     if (filters.status === "active" && !v.is_active) return false;
     if (filters.status === "inactive" && v.is_active) return false;
+    if (filters.language === "ingles" && !(v.language_req ?? "").toLowerCase().includes("ingl")) {
+      return false;
+    }
+    if (filters.language === "no_ingles" && (v.language_req ?? "").toLowerCase().includes("ingl")) {
+      return false;
+    }
+    if (filters.portal && v.source_portal !== filters.portal) return false;
     return true;
   });
 }
@@ -268,8 +300,9 @@ export async function getVacanciesPage(
 
   if (supabase) {
     try {
-      // Si hay filtro por tecnología, se resuelve el nombre → id y se obtienen
-      // los vacancy_id que matchean. Un resultado vacío corta de inmediato.
+      // Los filtros que no son una condición simple se resuelven primero en un
+      // conjunto de ids (tecnología vía bridge, "sin inglés" vía OR null/not-
+      // ilike) para no pisar el .or() de la búsqueda de texto. Vacío corta.
       let ids: string[] | undefined;
       if (filters.tech) {
         const { data: techRow, error: techError } = await supabase
@@ -294,6 +327,26 @@ export async function getVacanciesPage(
         ids = (bridge ?? []).map(
           (row) => (row as { vacancy_id: string }).vacancy_id
         );
+        if (ids.length === 0) {
+          return { items: [], total: 0, page, perPage, totalPages: 0 };
+        }
+      }
+
+      if (filters.language === "no_ingles") {
+        const { data: langRows, error: langError } = await supabase
+          .from("vacancies")
+          .select("id")
+          .or("language_req.is.null,language_req.not.ilike.%ingl%");
+
+        if (langError) {
+          return { items: [], total: 0, page, perPage, totalPages: 0 };
+        }
+
+        const langIds = (langRows ?? []).map(
+          (row) => (row as { id: string }).id
+        );
+        // Si ya veníamos con ids de tecnología, intersecamos.
+        ids = ids ? ids.filter((id) => langIds.includes(id)) : langIds;
         if (ids.length === 0) {
           return { items: [], total: 0, page, perPage, totalPages: 0 };
         }
@@ -325,6 +378,15 @@ export async function getVacanciesPage(
       } else if (filters.status === "inactive") {
         q = q.eq("is_active", false);
       }
+      if (filters.language === "ingles") {
+        q = q.ilike("language_req", "%ingl%");
+      }
+      // "no_ingles" ya quedó resuelto como conjunto de ids más arriba.
+      if (filters.portal) {
+        q = q.eq("source_portal", filters.portal);
+      }
+
+      q = q.order("first_seen", { ascending: false });
 
       const from = (page - 1) * perPage;
       const { data, count, error } = await q.range(from, from + perPage - 1);
@@ -345,6 +407,7 @@ export async function getVacanciesPage(
   // Fallback: mocks filtrados en memoria y paginados.
   const all = getMockVacanciesWithStack();
   const filtered = filterVacancies(all, filters);
+  filtered.sort((a, b) => (b.first_seen ?? "").localeCompare(a.first_seen ?? ""));
   const total = filtered.length;
   const from = (page - 1) * perPage;
   const items = filtered.slice(from, from + perPage);

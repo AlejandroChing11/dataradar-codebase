@@ -1,6 +1,6 @@
 import type { WorkMode } from "@/lib/types";
 
-export type BadgeTone = "success" | "info" | "warning" | "danger" | "muted";
+export type BadgeTone = "success" | "info" | "warning" | "danger" | "muted" | "accent";
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
   success: "border-success text-success",
@@ -8,6 +8,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   warning: "border-warning text-warning",
   danger: "border-danger text-danger",
   muted: "border-border text-text-muted",
+  accent: "border-accent text-accent",
 };
 
 export const WORK_MODE_META: Record<WorkMode, { label: string; tone: BadgeTone }> = {

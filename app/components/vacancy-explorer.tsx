@@ -41,6 +41,19 @@ const MODE_OPTIONS: SelectOption[] = [
   })),
 ];
 
+const LANGUAGE_OPTIONS: SelectOption[] = [
+  { value: "all", label: "Todas" },
+  { value: "ingles", label: "Requiere inglés" },
+  { value: "no_ingles", label: "Sin inglés" },
+];
+
+const PORTAL_OPTIONS: SelectOption[] = [
+  { value: "all", label: "Todos" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "teamtailor", label: "Teamtailor" },
+  { value: "tecnoempleo", label: "Tecnoempleo" },
+];
+
 export default function VacancyExplorer({
   vacancies,
   technologies,
@@ -113,7 +126,7 @@ export default function VacancyExplorer({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-3 lg:grid-cols-4">
         <label className="col-span-2 flex flex-col gap-1 text-xs text-text-muted sm:col-span-3 lg:col-span-2">
           Buscar
           <input
@@ -182,6 +195,26 @@ export default function VacancyExplorer({
             onChange={(v) => updateParams({ status: v === "all" ? null : v, page: null })}
             options={STATUS_OPTIONS}
             ariaLabel="Filtrar por estado"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 text-xs text-text-muted">
+          <span>Idioma</span>
+          <Select
+            value={filters.language ?? "all"}
+            onChange={(v) => updateParams({ lang: v === "all" ? null : v, page: null })}
+            options={LANGUAGE_OPTIONS}
+            ariaLabel="Filtrar por idioma"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 text-xs text-text-muted">
+          <span>Portal</span>
+          <Select
+            value={filters.portal ?? "all"}
+            onChange={(v) => updateParams({ portal: v === "all" ? null : v, page: null })}
+            options={PORTAL_OPTIONS}
+            ariaLabel="Filtrar por portal"
           />
         </div>
       </div>

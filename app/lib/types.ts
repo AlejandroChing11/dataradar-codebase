@@ -67,3 +67,13 @@ export interface VacancyTechnology {
 export interface VacancyWithStack extends Vacancy {
   technologies: { name: string; is_required: boolean }[];
 }
+
+export interface Discard {
+  id: string;
+  discard_date: string | null;
+  title: string | null;
+  company_name: string | null;
+  source_raw: string | null;
+  reason: string | null;
+  created_at: string;
+}

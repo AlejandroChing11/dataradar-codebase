@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { VacancyWithStack } from "@/lib/types";
+import { isWithinLastDays } from "@/lib/dates";
 import Chip from "./chip";
-import { StatusBadge, WorkModeBadge } from "./badge";
+import { Badge, StatusBadge, WorkModeBadge } from "./badge";
 
 function yearsLabel(v: VacancyWithStack): string {
   const min = v.years_min;
@@ -14,6 +15,7 @@ function yearsLabel(v: VacancyWithStack): string {
 
 export default function VacancyCard({ vacancy }: { vacancy: VacancyWithStack }) {
   const href = vacancy.url ?? vacancy.alt_url ?? "#";
+  const isNew = isWithinLastDays(vacancy.first_seen, 2);
   // Requeridas primero para resaltar el core del stack.
   const techs = [...vacancy.technologies].sort(
     (a, b) => Number(b.is_required) - Number(a.is_required)
@@ -36,7 +38,10 @@ export default function VacancyCard({ vacancy }: { vacancy: VacancyWithStack }) 
             {vacancy.company_name ?? "Empresa"}
           </p>
         </div>
-        <StatusBadge active={vacancy.is_active} />
+        <div className="flex items-center gap-2">
+          {isNew && <Badge tone="accent">Nuevo</Badge>}
+          <StatusBadge active={vacancy.is_active} />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-text-muted">
