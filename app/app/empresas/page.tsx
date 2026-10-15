@@ -119,10 +119,11 @@ function CompanyCard({ company }: { company: Company }) {
 export default async function EmpresasPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  const page = parsePage(searchParams.page);
-  const size = parseSize(searchParams.size);
+  const sp = await searchParams;
+  const page = parsePage(sp.page);
+  const size = parseSize(sp.size);
   const result = await getCompaniesPage(page, size);
 
   return (

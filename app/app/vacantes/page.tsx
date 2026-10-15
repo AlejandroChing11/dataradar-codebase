@@ -55,11 +55,12 @@ function parseFilters(searchParams: SearchParams): VacancyFilters {
 export default async function VacantesPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  const page = parsePage(searchParams.page);
-  const size = parseSize(searchParams.size);
-  const filters = parseFilters(searchParams);
+  const sp = await searchParams;
+  const page = parsePage(sp.page);
+  const size = parseSize(sp.size);
+  const filters = parseFilters(sp);
 
   const [result, technologies] = await Promise.all([
     getVacanciesPage(filters, page, size),

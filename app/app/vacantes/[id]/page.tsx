@@ -98,9 +98,10 @@ function ExternalLinkIcon() {
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const v = await getVacancyById(params.id);
+  const { id } = await params;
+  const v = await getVacancyById(id);
   if (!v) return { title: "Vacante no encontrada — DataRadar" };
   const desc = [v.company_name, v.fit_line].filter(Boolean).join(" · ");
   return {
@@ -112,9 +113,10 @@ export async function generateMetadata({
 export default async function VacancyDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const vacancy = await getVacancyById(params.id);
+  const { id } = await params;
+  const vacancy = await getVacancyById(id);
   if (!vacancy) notFound();
 
   const company = vacancy.company_id
