@@ -1,4 +1,10 @@
-import type { Company, Technology, VacancyWithStack } from "./types";
+import type {
+  Company,
+  Technology,
+  Vacancy,
+  VacancyTechnology,
+  VacancyWithStack,
+} from "./types";
 import { getSupabase } from "./supabase";
 import {
   getMockVacanciesWithStack,
@@ -26,13 +32,49 @@ async function tryVacancies(): Promise<VacancyWithStack[] | null> {
   const supabase = getSupabase();
   if (!supabase) return null;
   try {
-    const { data, error } = await supabase.from("vacancies").select("*");
-    if (error || !data || data.length === 0) return null;
-    // La resolución del stack contra vacancy_technologies + technologies se
-    // completa cuando haya datos reales; por ahora se garantiza el shape.
-    return (data as VacancyWithStack[]).map((v) => ({
+    const { data: vacancies, error: vacanciesError } = await supabase
+      .from("vacancies")
+      .select("*");
+    if (vacanciesError || !vacancies || vacancies.length === 0) return null;
+
+    // Resolución del stack. Es best-effort: si technologies o el bridge fallan
+    // pero las vacantes vinieron con datos, la conexión ya es real y devolvemos
+    // vacantes con stack vacío en lugar de caer a los mocks.
+    let techNames = new Map<number, string>();
+    let stacks = new Map<string, { name: string; is_required: boolean }[]>();
+
+    try {
+      const [techRes, bridgeRes] = await Promise.all([
+        supabase.from("technologies").select("*"),
+        supabase.from("vacancy_technology").select("*"),
+      ]);
+
+      if (!techRes.error && techRes.data) {
+        techNames = new Map<number, string>(
+          (techRes.data as Technology[]).map((t): [number, string] => [t.id, t.name])
+        );
+      }
+
+      if (!bridgeRes.error && bridgeRes.data) {
+        for (const vt of bridgeRes.data as VacancyTechnology[]) {
+          const name = techNames.get(vt.technology_id);
+          if (!name) continue;
+          const entry = { name, is_required: vt.is_required };
+          const existing = stacks.get(vt.vacancy_id);
+          if (existing) {
+            existing.push(entry);
+          } else {
+            stacks.set(vt.vacancy_id, [entry]);
+          }
+        }
+      }
+    } catch {
+      // El stack es opcional: continuamos con las vacantes sin tecnologías.
+    }
+
+    return (vacancies as Vacancy[]).map((v) => ({
       ...v,
-      technologies: v.technologies ?? [],
+      technologies: stacks.get(v.id) ?? [],
     }));
   } catch {
     return null;
