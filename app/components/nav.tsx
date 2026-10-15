@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const LINKS = [
   { href: "/", label: "Dashboard" },
@@ -33,6 +33,21 @@ export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  // Cierre por tecla Escape.
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // Cierre al cambiar de ruta (por ejemplo, navegación con atrás/adelante).
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
@@ -60,49 +75,75 @@ export default function Nav() {
 
         <button
           type="button"
-          className="rounded-md border border-border p-2 text-text-muted md:hidden"
-          aria-label="Abrir menú"
+          aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
+          aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
+          className="relative h-10 w-10 rounded-md text-text md:hidden"
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            {open ? (
-              <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
-            ) : (
-              <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
-            )}
-          </svg>
+          <span className="pointer-events-none absolute left-1/2 top-1/2 h-5 w-6 -translate-x-1/2 -translate-y-1/2">
+            <span
+              className={`absolute left-0 top-[5px] h-[2px] w-6 rounded bg-current transition-transform duration-200 ${
+                open ? "translate-y-1 rotate-45" : "translate-y-0 rotate-0"
+              }`}
+            />
+            <span
+              className={`absolute left-0 top-[9px] h-[2px] w-6 rounded bg-current transition-opacity duration-200 ${
+                open ? "opacity-0" : "opacity-100"
+              }`}
+            />
+            <span
+              className={`absolute left-0 top-[13px] h-[2px] w-6 rounded bg-current transition-transform duration-200 ${
+                open ? "-translate-y-1 -rotate-45" : "translate-y-0 rotate-0"
+              }`}
+            />
+          </span>
         </button>
       </nav>
 
       {open && (
-        <div className="border-t border-border md:hidden">
-          <ul className="mx-auto max-w-6xl px-4 py-2 sm:px-6">
-            {LINKS.map((l) => (
-              <li key={l.href}>
-                <Link
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className={`block rounded-md px-3 py-2.5 text-sm ${
-                    isActive(pathname, l.href)
-                      ? "bg-surface-2 text-text"
-                      : "text-text-muted hover:bg-surface hover:text-text"
-                  }`}
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <>
+          <div
+            className="fixed inset-0 z-30 bg-black/50 md:hidden"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            id="mobile-menu"
+            className="absolute inset-x-0 top-full z-40 border-b border-border bg-surface md:hidden animate-[dr-menu-in_0.18s_ease-out]"
+          >
+            <ul className="mx-auto max-w-6xl px-4 py-2 sm:px-6">
+              {LINKS.map((l) => {
+                const active = isActive(pathname, l.href);
+                return (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      onClick={() => setOpen(false)}
+                      className={`flex items-center gap-3 px-2 py-3 text-sm transition-colors ${
+                        active
+                          ? "bg-surface-2 text-text"
+                          : "text-text-muted hover:bg-surface hover:text-text"
+                      }`}
+                    >
+                      <span
+                        className={`h-6 w-[3px] shrink-0 rounded-full ${
+                          active ? "bg-primary" : "bg-transparent"
+                        }`}
+                      />
+                      {l.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="border-t border-border">
+              <p className="mx-auto max-w-6xl px-6 py-3 text-xs text-text-muted sm:px-8">
+                Tu radar de vacantes de data, 100% remotas.
+              </p>
+            </div>
+          </div>
+        </>
       )}
     </header>
   );

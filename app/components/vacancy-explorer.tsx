@@ -4,14 +4,42 @@ import { useMemo, useState } from "react";
 import type { Technology, VacancyWithStack } from "@/lib/types";
 import VacancyCard from "./vacancy-card";
 import { WORK_MODE_META } from "./badge";
+import Select, { type SelectOption } from "./select";
 
 type BlockFilter = "all" | "colombia" | "rest";
 type StatusFilter = "all" | "active" | "inactive";
 
 const YEAR_OPTIONS = ["all", "0", "1", "2", "3", "4", "5"];
 
-const SELECT_CLASS =
-  "rounded-md border border-border bg-bg px-3 py-2 text-sm text-text outline-none focus:border-primary";
+const BLOCK_OPTIONS: SelectOption[] = [
+  { value: "all", label: "Todos" },
+  { value: "colombia", label: "Colombia" },
+  { value: "rest", label: "Resto" },
+];
+
+const MIN_YEAR_OPTIONS: SelectOption[] = YEAR_OPTIONS.map((y) => ({
+  value: y,
+  label: y === "all" ? "Todos" : `${y}+`,
+}));
+
+const MAX_YEAR_OPTIONS: SelectOption[] = YEAR_OPTIONS.map((y) => ({
+  value: y,
+  label: y === "all" ? "Todos" : `≤ ${y}`,
+}));
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: "all", label: "Todas" },
+  { value: "active", label: "Activas" },
+  { value: "inactive", label: "Inactivas" },
+];
+
+const MODE_OPTIONS: SelectOption[] = [
+  { value: "all", label: "Todas" },
+  ...Object.entries(WORK_MODE_META).map(([value, meta]) => ({
+    value,
+    label: meta.label,
+  })),
+];
 
 export default function VacancyExplorer({
   vacancies,
@@ -27,6 +55,16 @@ export default function VacancyExplorer({
   const [maxYears, setMaxYears] = useState("all");
   const [mode, setMode] = useState("all");
   const [status, setStatus] = useState<StatusFilter>("all");
+
+  const techOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: "all", label: "Todas" },
+      ...[...technologies]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((t) => ({ value: t.name, label: t.name })),
+    ],
+    [technologies],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -72,87 +110,65 @@ export default function VacancyExplorer({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          Bloque
-          <select
+        <div className="flex flex-col gap-1 text-xs text-text-muted">
+          <span>Bloque</span>
+          <Select
             value={block}
-            onChange={(e) => setBlock(e.target.value as BlockFilter)}
-            className={SELECT_CLASS}
-          >
-            <option value="all">Todos</option>
-            <option value="colombia">Colombia</option>
-            <option value="rest">Resto</option>
-          </select>
-        </label>
+            onChange={(v) => setBlock(v as BlockFilter)}
+            options={BLOCK_OPTIONS}
+            ariaLabel="Filtrar por bloque"
+          />
+        </div>
 
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          Tecnología
-          <select value={tech} onChange={(e) => setTech(e.target.value)} className={SELECT_CLASS}>
-            <option value="all">Todas</option>
-            {[...technologies]
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((t) => (
-                <option key={t.id} value={t.name}>
-                  {t.name}
-                </option>
-              ))}
-          </select>
-        </label>
+        <div className="flex flex-col gap-1 text-xs text-text-muted">
+          <span>Tecnología</span>
+          <Select
+            value={tech}
+            onChange={setTech}
+            options={techOptions}
+            ariaLabel="Filtrar por tecnología"
+          />
+        </div>
 
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          Años mín.
-          <select
+        <div className="flex flex-col gap-1 text-xs text-text-muted">
+          <span>Años mín.</span>
+          <Select
             value={minYears}
-            onChange={(e) => setMinYears(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            {YEAR_OPTIONS.map((y) => (
-              <option key={y} value={y}>
-                {y === "all" ? "Todos" : `${y}+`}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setMinYears}
+            options={MIN_YEAR_OPTIONS}
+            ariaLabel="Filtrar por años mínimos"
+          />
+        </div>
 
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          Años máx.
-          <select
+        <div className="flex flex-col gap-1 text-xs text-text-muted">
+          <span>Años máx.</span>
+          <Select
             value={maxYears}
-            onChange={(e) => setMaxYears(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            {YEAR_OPTIONS.map((y) => (
-              <option key={y} value={y}>
-                {y === "all" ? "Todos" : `≤ ${y}`}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setMaxYears}
+            options={MAX_YEAR_OPTIONS}
+            ariaLabel="Filtrar por años máximos"
+          />
+        </div>
 
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          Modalidad
-          <select value={mode} onChange={(e) => setMode(e.target.value)} className={SELECT_CLASS}>
-            <option value="all">Todas</option>
-            {Object.entries(WORK_MODE_META).map(([value, meta]) => (
-              <option key={value} value={value}>
-                {meta.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-col gap-1 text-xs text-text-muted">
+          <span>Modalidad</span>
+          <Select
+            value={mode}
+            onChange={setMode}
+            options={MODE_OPTIONS}
+            ariaLabel="Filtrar por modalidad"
+          />
+        </div>
 
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          Estado
-          <select
+        <div className="flex flex-col gap-1 text-xs text-text-muted">
+          <span>Estado</span>
+          <Select
             value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className={SELECT_CLASS}
-          >
-            <option value="all">Todas</option>
-            <option value="active">Activas</option>
-            <option value="inactive">Inactivas</option>
-          </select>
-        </label>
+            onChange={(v) => setStatus(v as StatusFilter)}
+            options={STATUS_OPTIONS}
+            ariaLabel="Filtrar por estado"
+          />
+        </div>
       </div>
 
       <div className="flex items-center justify-between text-sm text-text-muted">
