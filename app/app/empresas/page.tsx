@@ -1,4 +1,5 @@
 import { getCompaniesPage } from "@/lib/data";
+import { safeExternalUrl } from "@/lib/safe-url";
 import type { Company } from "@/lib/types";
 import { Badge } from "@/components/badge";
 import Pagination from "@/components/pagination";
@@ -47,6 +48,9 @@ const LEVEL_COLORS: Record<string, string> = {
 
 function CompanyCard({ company }: { company: Company }) {
   const signals = parseSignals(company.signals);
+  const website = safeExternalUrl(company.website);
+  const careersUrl = safeExternalUrl(company.careers_url);
+  const linkedin = safeExternalUrl(company.linkedin);
   return (
     <article className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5 transition-colors hover:bg-surface-2">
       <div className="flex items-start justify-between gap-3">
@@ -81,9 +85,9 @@ function CompanyCard({ company }: { company: Company }) {
       )}
 
       <div className="mt-auto flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
-        {company.website && (
+        {website && (
           <a
-            href={company.website}
+            href={website}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:text-primary-strong"
@@ -91,9 +95,9 @@ function CompanyCard({ company }: { company: Company }) {
             Web
           </a>
         )}
-        {company.careers_url && (
+        {careersUrl && (
           <a
-            href={company.careers_url}
+            href={careersUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:text-primary-strong"
@@ -101,9 +105,9 @@ function CompanyCard({ company }: { company: Company }) {
             Empleos
           </a>
         )}
-        {company.linkedin && (
+        {linkedin && (
           <a
-            href={company.linkedin}
+            href={linkedin}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:text-primary-strong"

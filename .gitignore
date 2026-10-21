@@ -28,6 +28,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# gentle-ai / skill registry (auto-generated tooling state)
+.atl/
+
 # data pipeline (se añade su propio ignore luego)
 data/**/target/
 data/**/logs/

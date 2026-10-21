@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getVacancyById, getCompanyById } from "@/lib/data";
+import { safeExternalUrl } from "@/lib/safe-url";
 import type { Block, Vacancy } from "@/lib/types";
 import Chip from "@/components/chip";
 import {
@@ -123,7 +124,7 @@ export default async function VacancyDetailPage({
     ? await getCompanyById(vacancy.company_id)
     : null;
 
-  const applyUrl = vacancy.url ?? vacancy.alt_url;
+  const applyUrl = safeExternalUrl(vacancy.url ?? vacancy.alt_url);
   const required = vacancy.technologies.filter((t) => t.is_required);
   const optional = vacancy.technologies.filter((t) => !t.is_required);
   const details = buildDetails(vacancy);

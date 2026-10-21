@@ -1,12 +1,13 @@
-import { getDiscards, getVacancies } from "@/lib/data";
+import { getVacancies } from "@/lib/data";
 import {
   activeVacancies,
   avgYearsMinByBlock,
+  discardReasonBreakdown,
   remoteRateByBlock,
   repostRate,
   topTechnologies,
 } from "@/lib/analytics";
-import type { Block, Discard } from "@/lib/types";
+import type { Block } from "@/lib/types";
 import BarChart, { type BarDatum } from "@/components/charts/bar-chart";
 import Section from "@/components/section";
 
@@ -27,19 +28,11 @@ function Stat({ label, value, note }: { label: string; value: string; note?: str
   );
 }
 
-// Mapea el `source_raw` crudo del scout a una etiqueta legible para el gráfico.
-function discardSourceLabel(raw: string | null): string {
-  if (raw === "scout discards") return "Descartadas (scout)";
-  if (raw === "scout reviewed_not_prioritized") return "Revisadas, no priorizadas";
-  return raw ?? "Otro";
-}
-
 export default async function TendenciasPage() {
   const vacancies = await getVacancies();
-  const discards = await getDiscards();
 
   const active = activeVacancies(vacancies);
-  const discarded = discards.length;
+  const discarded = vacancies.length - active;
   const discardRate =
     active + discarded > 0 ? Math.round((discarded / (active + discarded)) * 100) : 0;
 
@@ -48,15 +41,11 @@ export default async function TendenciasPage() {
   const repostPct = Math.round(repostRate(vacancies) * 100);
   const top = topTechnologies(vacancies, 8).map((t) => ({ label: t.name, value: t.count }));
 
-  // Agrupación de descartes por `source_raw`.
-  const bySource = new Map<string, number>();
-  for (const d of discards) {
-    const raw = d.source_raw ?? "Otro";
-    bySource.set(raw, (bySource.get(raw) ?? 0) + 1);
-  }
-  const discardBySource: BarDatum[] = Array.from(bySource.entries()).map(
-    ([raw, count]) => ({ label: discardSourceLabel(raw), value: count })
-  );
+  // Embudo de descartes derivado de las vacantes (no toca la tabla interna `discards`).
+  const discardByReason: BarDatum[] = discardReasonBreakdown(vacancies).map((r) => ({
+    label: r.label,
+    value: r.value,
+  }));
 
   const remoteLabel = (block: Block): string => {
     const found = remoteByBlock.find((r) => r.block === block);
@@ -91,31 +80,16 @@ export default async function TendenciasPage() {
           </div>
         </Section>
 
-        <Section title="Embudo de descartes" subtitle="Descartes reales por origen y motivo">
+        <Section title="Embudo de descartes" subtitle="Señales de descarte derivadas de las vacantes">
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-3 gap-3">
               <Stat label="Vacantes activas" value={String(active)} />
-              <Stat label="Descartadas" value={String(discarded)} />
+              <Stat label="Cerradas o vencidas" value={String(discarded)} />
               <Stat label="Tasa de descarte" value={`${discardRate}%`} />
             </div>
 
             <div className="rounded-xl border border-border bg-surface p-5">
-              <BarChart data={discardBySource} accent="var(--warning)" />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium text-text-muted">Motivos recientes</h3>
-              {discards.length === 0 ? (
-                <p className="text-sm text-text-muted">Sin descartes registrados</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {discards.slice(0, 6).map((d: Discard) => (
-                    <li key={d.id} className="text-sm text-text">
-                      {d.company_name ?? "Empresa"} — {d.reason}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <BarChart data={discardByReason} accent="var(--warning)" />
             </div>
           </div>
         </Section>

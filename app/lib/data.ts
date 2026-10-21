@@ -1,6 +1,5 @@
 import type {
   Company,
-  Discard,
   Technology,
   Vacancy,
   VacancyTechnology,
@@ -10,7 +9,6 @@ import { getSupabase } from "./supabase";
 import {
   getMockVacanciesWithStack,
   mockCompanies,
-  mockDiscards,
   mockTechnologies,
 } from "./mock-data";
 import {
@@ -119,21 +117,6 @@ async function tryTechnologies(): Promise<Technology[] | null> {
   }
 }
 
-async function tryDiscards(): Promise<Discard[] | null> {
-  const supabase = getSupabase();
-  if (!supabase) return null;
-  try {
-    const { data, error } = await supabase
-      .from("discards")
-      .select("*")
-      .order("discard_date", { ascending: false });
-    if (error || !data || data.length === 0) return null;
-    return data as Discard[];
-  } catch {
-    return null;
-  }
-}
-
 export async function getVacancies(): Promise<VacancyWithStack[]> {
   const fromSupabase = await tryVacancies();
   if (fromSupabase) return fromSupabase;
@@ -150,12 +133,6 @@ export async function getTechnologies(): Promise<Technology[]> {
   const fromSupabase = await tryTechnologies();
   if (fromSupabase) return fromSupabase;
   return mockTechnologies;
-}
-
-export async function getDiscards(): Promise<Discard[]> {
-  const fromSupabase = await tryDiscards();
-  if (fromSupabase) return fromSupabase;
-  return mockDiscards;
 }
 
 export async function getVacancyById(id: string): Promise<VacancyWithStack | null> {

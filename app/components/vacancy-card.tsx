@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { VacancyWithStack } from "@/lib/types";
 import { isWithinLastDays } from "@/lib/dates";
+import { safeExternalUrl } from "@/lib/safe-url";
 import Chip from "./chip";
 import { Badge, StatusBadge, WorkModeBadge } from "./badge";
 
@@ -14,7 +15,7 @@ function yearsLabel(v: VacancyWithStack): string {
 }
 
 export default function VacancyCard({ vacancy }: { vacancy: VacancyWithStack }) {
-  const href = vacancy.url ?? vacancy.alt_url ?? "#";
+  const href = safeExternalUrl(vacancy.url ?? vacancy.alt_url) ?? "#";
   const isNew = isWithinLastDays(vacancy.first_seen, 2);
   // Requeridas primero para resaltar el core del stack.
   const techs = [...vacancy.technologies].sort(
