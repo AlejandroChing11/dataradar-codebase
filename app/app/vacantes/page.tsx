@@ -1,6 +1,7 @@
 import { getTechnologies, getVacanciesPage } from "@/lib/data";
 import type { VacancyFilters } from "@/lib/data";
 import VacancyExplorer from "@/components/vacancy-explorer";
+import PageHeader from "@/components/page-header";
 
 export const revalidate = 3600; // Refresca el radar cada hora (ISR)
 
@@ -69,12 +70,13 @@ export default async function VacantesPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Vacantes</h1>
-        <p className="max-w-2xl text-text-muted">
-          Explora y filtra las vacantes de data remotas rastreadas.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="El radar · señales en crudo"
+        title="Vacantes"
+        highlight="al detalle"
+        subtitle="Explora y filtra las vacantes de data remotas que el radar capturó, 100% para LATAM y España."
+        accent="var(--primary)"
+      />
 
       <VacancyExplorer
         vacancies={result.items}
