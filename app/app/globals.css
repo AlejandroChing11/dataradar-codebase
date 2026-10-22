@@ -166,3 +166,47 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .dr-live { animation: none; }
 }
+
+/* ===== Modo claro: refuerzo de acentos para legibilidad sobre blanco ===== */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #2563eb;
+  }
+}
+:root[data-theme="light"] {
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #2563eb;
+}
+
+/* ===== Burbujas de demanda (pop-in + flotación sutil) ===== */
+@keyframes dr-pop {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.dr-pop { animation: dr-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+@keyframes dr-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+.dr-float { animation: dr-float 4.5s ease-in-out infinite; }
+
+/* ===== Tarjeta con glow al pasar el cursor ===== */
+.dr-card-glow {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.dr-card-glow:hover {
+  border-color: color-mix(in oklab, var(--primary) 55%, transparent);
+  box-shadow: 0 10px 40px -16px color-mix(in oklab, var(--primary) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dr-pop, .dr-float { animation: none; }
+  .dr-card-glow:hover { transform: none; }
+}

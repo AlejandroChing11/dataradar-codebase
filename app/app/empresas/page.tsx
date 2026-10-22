@@ -3,6 +3,7 @@ import { safeExternalUrl } from "@/lib/safe-url";
 import type { Company } from "@/lib/types";
 import { Badge } from "@/components/badge";
 import Pagination from "@/components/pagination";
+import PageHeader from "@/components/page-header";
 
 export const revalidate = 3600; // Refresca el radar cada hora (ISR)
 
@@ -52,7 +53,7 @@ function CompanyCard({ company }: { company: Company }) {
   const careersUrl = safeExternalUrl(company.careers_url);
   const linkedin = safeExternalUrl(company.linkedin);
   return (
-    <article className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5 transition-colors hover:bg-surface-2">
+    <article className="dr-card-glow flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-semibold leading-snug">{company.name}</h3>
@@ -132,12 +133,13 @@ export default async function EmpresasPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Empresas</h1>
-        <p className="max-w-2xl text-text-muted">
-          Empresas de LATAM y España rastreadas por sus roles de data remotos.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="El radar · quién contrata"
+        title="Empresas"
+        highlight="en la mira"
+        subtitle="Empresas de LATAM y España rastreadas por sus roles de data remotos."
+        accent="var(--accent)"
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {result.items.map((c) => (

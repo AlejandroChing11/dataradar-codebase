@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import ThemeToggle from "@/components/theme-toggle";
+import LangToggle from "@/components/lang-toggle";
 
 const LINKS = [
   { href: "/", label: "Inicio" },
@@ -56,31 +58,36 @@ export default function Nav() {
           <span className="font-mono text-lg font-semibold tracking-tight">DataRadar</span>
         </Link>
 
-        <ul className="hidden items-center gap-1 md:flex">
-          {LINKS.map((l) => (
-            <li key={l.href}>
-              <Link
-                href={l.href}
-                className={`rounded-md px-3 py-2 text-sm transition-colors ${
-                  isActive(pathname, l.href)
-                    ? "bg-surface-2 text-text"
-                    : "text-text-muted hover:bg-surface hover:text-text"
-                }`}
-              >
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex items-center gap-2">
+          <ul className="hidden items-center gap-1 md:flex">
+            {LINKS.map((l) => (
+              <li key={l.href}>
+                <Link
+                  href={l.href}
+                  className={`rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive(pathname, l.href)
+                      ? "bg-surface-2 text-text"
+                      : "text-text-muted hover:bg-surface hover:text-text"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-        <button
-          type="button"
-          aria-label={open ? "Cerrar menú" : "Abrir menú"}
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          onClick={() => setOpen((v) => !v)}
-          className="relative h-10 w-10 rounded-md text-text md:hidden"
-        >
+          {/* Controles: idioma (solo en la landing) + tema (siempre) */}
+          {pathname === "/" && <LangToggle />}
+          <ThemeToggle />
+
+          <button
+            type="button"
+            aria-label={open ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            onClick={() => setOpen((v) => !v)}
+            className="relative h-10 w-10 rounded-md text-text md:hidden"
+          >
           <span className="pointer-events-none absolute left-1/2 top-1/2 h-5 w-6 -translate-x-1/2 -translate-y-1/2">
             <span
               className={`absolute left-0 top-[5px] h-[2px] w-6 rounded bg-current transition-transform duration-200 ${
@@ -98,7 +105,8 @@ export default function Nav() {
               }`}
             />
           </span>
-        </button>
+          </button>
+        </div>
       </nav>
 
       {open && (
