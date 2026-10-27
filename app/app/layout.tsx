@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import Nav from "@/components/nav";
 import Footer from "@/components/footer";
 import { Providers } from "@/components/providers";
+import { getServerLang } from "@/lib/server-i18n";
 import "./globals.css";
 
 // Aplica el tema guardado ANTES del primer pintado para evitar el parpadeo.
@@ -15,14 +16,15 @@ export const metadata: Metadata = {
     "El radar diario del mercado de vacantes de Data Engineer y Analytics Engineer, 100% remotas para LATAM y España.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const lang = await getServerLang();
   return (
     <html
-      lang="es"
+      lang={lang}
       suppressHydrationWarning
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
@@ -30,7 +32,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
       </head>
       <body className="flex min-h-screen flex-col bg-bg text-text antialiased">
-        <Providers>
+        <Providers initialLang={lang}>
           <Nav />
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">{children}</main>
           <Footer />

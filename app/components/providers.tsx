@@ -70,7 +70,7 @@ function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/* ===================== Idioma (solo landing) ===================== */
+/* ===================== Idioma (toda la UI) ===================== */
 
 interface LangCtx {
   lang: Lang;
@@ -85,25 +85,39 @@ export function useLang(): LangCtx {
   return ctx;
 }
 
-function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("es");
+// Cookie compartida con el servidor (lib/server-i18n.ts).
+const LANG_COOKIE = "dr-lang";
 
+function persistLang(l: Lang) {
+  try {
+    localStorage.setItem("dr-lang", l);
+    // Sin SameSite/expiración explícita: cookie de sesión, legible en server.
+    document.cookie = `${LANG_COOKIE}=${l}; path=/`;
+  } catch {
+    /* no-op */
+  }
+  document.documentElement.lang = l;
+}
+
+function LangProvider({
+  children,
+  initialLang,
+}: {
+  children: ReactNode;
+  initialLang: Lang;
+}) {
+  const [lang, setLangState] = useState<Lang>(initialLang);
+
+  // Sincroniza desde el server: si la cookie cambió sin pasar por el toggle
+  // (p. ej. navegación con back/forward), actualizamos el estado y el <html>.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("dr-lang");
-      if (saved === "es" || saved === "en") setLangState(saved);
-    } catch {
-      /* no-op */
-    }
-  }, []);
+    setLangState(initialLang);
+    document.documentElement.lang = initialLang;
+  }, [initialLang]);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
-    try {
-      localStorage.setItem("dr-lang", l);
-    } catch {
-      /* no-op */
-    }
+    persistLang(l);
   }, []);
 
   return (
@@ -115,10 +129,16 @@ function LangProvider({ children }: { children: ReactNode }) {
 
 /* ===================== Wrapper ===================== */
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  initialLang = "es",
+}: {
+  children: ReactNode;
+  initialLang?: Lang;
+}) {
   return (
     <ThemeProvider>
-      <LangProvider>{children}</LangProvider>
+      <LangProvider initialLang={initialLang}>{children}</LangProvider>
     </ThemeProvider>
   );
 }

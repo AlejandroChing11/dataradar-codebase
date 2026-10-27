@@ -1,20 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import type { VacancyWithStack } from "@/lib/types";
 import { isWithinLastDays } from "@/lib/dates";
 import { safeExternalUrl } from "@/lib/safe-url";
 import Chip from "./chip";
 import { Badge, StatusBadge, WorkModeBadge } from "./badge";
-
-function yearsLabel(v: VacancyWithStack): string {
-  const min = v.years_min;
-  const max = v.years_max;
-  if (min === null && max === null) return "Sin requisito de años";
-  if (min === null) return `Hasta ${max} años`;
-  if (max === null) return `${min}+ años`;
-  return min === max ? `${min} año` : `${min}–${max} años`;
-}
+import { useLang } from "@/components/providers";
+import { DICT, yearsLabel } from "@/lib/i18n";
 
 export default function VacancyCard({ vacancy }: { vacancy: VacancyWithStack }) {
+  const { lang } = useLang();
+  const t = DICT[lang].common;
   const href = safeExternalUrl(vacancy.url ?? vacancy.alt_url) ?? "#";
   const isNew = isWithinLastDays(vacancy.first_seen, 2);
   // Requeridas primero para resaltar el core del stack.
@@ -29,18 +26,18 @@ export default function VacancyCard({ vacancy }: { vacancy: VacancyWithStack }) 
           <h3 className="font-semibold leading-snug">
             <Link
               href={`/vacantes/${vacancy.id}`}
-              title="Ver detalle"
+              title={t.viewDetail}
               className="transition-colors hover:text-primary"
             >
               {vacancy.title}
             </Link>
           </h3>
           <p className="mt-1 truncate text-sm text-text-muted">
-            {vacancy.company_name ?? "Empresa"}
+            {vacancy.company_name ?? t.company}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {isNew && <Badge tone="accent">Nuevo</Badge>}
+          {isNew && <Badge tone="accent">{t.newLabel}</Badge>}
           <StatusBadge active={vacancy.is_active} />
         </div>
       </div>
@@ -48,7 +45,7 @@ export default function VacancyCard({ vacancy }: { vacancy: VacancyWithStack }) 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-text-muted">
         {vacancy.location && <span>{vacancy.location}</span>}
         {vacancy.work_mode && <WorkModeBadge mode={vacancy.work_mode} />}
-        <span>{yearsLabel(vacancy)}</span>
+        <span>{yearsLabel(lang, vacancy.years_min, vacancy.years_max)}</span>
       </div>
 
       {techs.length > 0 && (
@@ -67,7 +64,7 @@ export default function VacancyCard({ vacancy }: { vacancy: VacancyWithStack }) 
         rel="noopener noreferrer"
         className="mt-auto inline-flex items-center gap-1.5 pt-1 text-sm font-medium text-primary hover:text-primary-strong"
       >
-        Ver oferta
+        {t.viewOffer}
         <span aria-hidden="true">→</span>
       </a>
     </article>
