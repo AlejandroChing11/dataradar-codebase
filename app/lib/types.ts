@@ -31,6 +31,14 @@ export interface Vacancy {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  stack: VacancyStackEntry[]; // jsonb, denormalizado: [{ tech, req }]
+}
+
+// Entrada del stack denormalizado en `vacancies.stack` (jsonb).
+// Reemplaza la resolución vía `vacancy_technology` + `technologies`.
+export interface VacancyStackEntry {
+  tech: string;
+  req: boolean;
 }
 
 export interface Company {

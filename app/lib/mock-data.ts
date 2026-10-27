@@ -799,6 +799,8 @@ function yearsRaw(d: VacancyDraft): string | null {
   return min === max ? `${min} año` : `${min}–${max} años`;
 }
 
+const techNameById = new Map(mockTechnologies.map((t) => [t.id, t.name]));
+
 function buildVacancies(): Vacancy[] {
   return drafts.map((d) => {
     const company = companyById.get(d.company_id);
@@ -830,6 +832,12 @@ function buildVacancies(): Vacancy[] {
       is_active: d.is_active,
       created_at: daysAgo(d.first_seen_days_ago),
       updated_at: daysAgo(d.last_seen_days_ago),
+      // Refleja la columna denormalizada `vacancies.stack` (jsonb) del DDL:
+      // [{ tech, req }] con el nombre de tecnología resuelto desde el id.
+      stack: d.stack.map(([technology_id, is_required]) => ({
+        tech: techNameById.get(technology_id) ?? "",
+        req: is_required,
+      })),
     };
   });
 }
@@ -843,8 +851,6 @@ export const mockVacancyTechnology: VacancyTechnology[] = drafts.flatMap((d) =>
     is_required,
   }))
 );
-
-const techNameById = new Map(mockTechnologies.map((t) => [t.id, t.name]));
 
 // Resuelve cada vacante con su stack (technologies) usando el puente vacante↔tecnología.
 export function getMockVacanciesWithStack(): VacancyWithStack[] {
