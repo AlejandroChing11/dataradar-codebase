@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useLang } from "@/components/providers";
+import { DICT } from "@/lib/i18n";
 
 export interface SelectOption {
   value: string;
@@ -27,6 +29,8 @@ export default function Select({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
   const id = useId();
+  const { lang } = useLang();
+  const noOptions = DICT[lang].select.noOptions;
 
   const selected = options.find((o) => o.value === value) ?? null;
 
@@ -164,7 +168,7 @@ export default function Select({
               className="cursor-default px-3 py-2 text-sm text-text-muted"
               aria-disabled="true"
             >
-              Sin opciones
+              {noOptions}
             </li>
           ) : (
             options.map((opt, i) => {

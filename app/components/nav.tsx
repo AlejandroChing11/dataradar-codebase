@@ -5,13 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/theme-toggle";
 import LangToggle from "@/components/lang-toggle";
-
-const LINKS = [
-  { href: "/", label: "Inicio" },
-  { href: "/vacantes", label: "Vacantes" },
-  { href: "/empresas", label: "Empresas" },
-  { href: "/tendencias", label: "Tendencias" },
-];
+import { useLang } from "@/components/providers";
+import { DICT } from "@/lib/i18n";
 
 function RadarMark({ size = 28 }: { size?: number }) {
   return (
@@ -34,6 +29,15 @@ function isActive(pathname: string, href: string): boolean {
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { lang } = useLang();
+  const t = DICT[lang].nav;
+
+  const LINKS = [
+    { href: "/", label: t.home },
+    { href: "/vacantes", label: t.vacancies },
+    { href: "/empresas", label: t.companies },
+    { href: "/tendencias", label: t.trends },
+  ];
 
   // Cierre por tecla Escape.
   useEffect(() => {
@@ -76,13 +80,13 @@ export default function Nav() {
             ))}
           </ul>
 
-          {/* Controles: idioma (solo en la landing) + tema (siempre) */}
-          {pathname === "/" && <LangToggle />}
+          {/* Controles: idioma + tema (siempre visibles) */}
+          <LangToggle />
           <ThemeToggle />
 
           <button
             type="button"
-            aria-label={open ? "Cerrar menú" : "Abrir menú"}
+            aria-label={open ? t.closeMenu : t.openMenu}
             aria-expanded={open}
             aria-controls="mobile-menu"
             onClick={() => setOpen((v) => !v)}
@@ -147,7 +151,7 @@ export default function Nav() {
             </ul>
             <div className="border-t border-border">
               <p className="mx-auto max-w-6xl px-6 py-3 text-xs text-text-muted sm:px-8">
-                Tu radar de vacantes de data, 100% remotas.
+                {t.tagline}
               </p>
             </div>
           </div>

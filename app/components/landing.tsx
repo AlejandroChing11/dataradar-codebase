@@ -4,8 +4,7 @@ import Link from "next/link";
 import RadarSweep from "@/components/radar-animation";
 import DemandBubbles from "@/components/charts/demand-bubbles";
 import { useLang } from "@/components/providers";
-import { DICT } from "@/lib/i18n";
-
+import { DICT, type Lang } from "@/lib/i18n";
 export interface LandingData {
   activeVacancies: number;
   newToday: number;
@@ -27,13 +26,13 @@ const BTN_PRIMARY =
 const BTN_GHOST =
   "inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 font-medium text-text transition-colors hover:border-primary/60 hover:text-primary";
 
-function fmt(n: number) {
-  return (n ?? 0).toLocaleString("es-CO");
+function fmt(n: number, lang: Lang) {
+  return (n ?? 0).toLocaleString(lang === "en" ? "en-US" : "es-CO");
 }
 
 export default function Landing({ data }: { data: LandingData }) {
   const { lang } = useLang();
-  const t = DICT[lang];
+  const t = DICT[lang].landing;
 
   return (
     <div className="flex flex-col gap-16 sm:gap-20">
@@ -59,7 +58,7 @@ export default function Landing({ data }: { data: LandingData }) {
 
           <h1 className="mt-5 text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
             {t.heroTitlePre}{" "}
-            <span className="dr-grad">{fmt(data.activeVacancies)}</span>{" "}
+            <span className="dr-grad">{fmt(data.activeVacancies, lang)}</span>{" "}
             {t.heroTitlePost}
           </h1>
 
@@ -86,7 +85,7 @@ export default function Landing({ data }: { data: LandingData }) {
             <RadarSweep size={248} />
           </div>
           <span className="absolute -bottom-1 rounded-full border border-success/40 bg-success/10 px-3 py-1 font-mono text-xs text-success">
-            {t.chipToday(fmt(data.newToday))}
+            {t.chipToday(fmt(data.newToday, lang))}
           </span>
         </div>
       </section>
@@ -101,7 +100,7 @@ export default function Landing({ data }: { data: LandingData }) {
         ].map((s) => (
           <div key={s.l}>
             <div className={`font-mono text-4xl font-bold tracking-tight sm:text-5xl ${s.c}`}>
-              {fmt(s.v)}
+              {fmt(s.v, lang)}
             </div>
             <div className="mt-1 text-sm text-text-muted">{s.l}</div>
           </div>

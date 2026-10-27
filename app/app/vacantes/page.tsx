@@ -2,6 +2,8 @@ import { getTechnologies, getVacanciesPage } from "@/lib/data";
 import type { VacancyFilters } from "@/lib/data";
 import VacancyExplorer from "@/components/vacancy-explorer";
 import PageHeader from "@/components/page-header";
+import { getServerLang } from "@/lib/server-i18n";
+import { DICT } from "@/lib/i18n";
 
 export const revalidate = 3600; // Refresca el radar cada hora (ISR)
 
@@ -62,6 +64,8 @@ export default async function VacantesPage({
   const page = parsePage(sp.page);
   const size = parseSize(sp.size);
   const filters = parseFilters(sp);
+  const lang = await getServerLang();
+  const t = DICT[lang].vacancies;
 
   const [result, technologies] = await Promise.all([
     getVacanciesPage(filters, page, size),
@@ -71,10 +75,10 @@ export default async function VacantesPage({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        eyebrow="El radar · señales en crudo"
-        title="Vacantes"
-        highlight="al detalle"
-        subtitle="Explora y filtra las vacantes de data remotas que el radar capturó, 100% para LATAM y España."
+        eyebrow={t.eyebrow}
+        title={t.title}
+        highlight={t.highlight}
+        subtitle={t.subtitle}
         accent="var(--primary)"
       />
 

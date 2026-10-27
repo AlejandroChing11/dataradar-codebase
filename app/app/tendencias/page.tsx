@@ -12,6 +12,8 @@ import DemandBubbles, { type BubbleDatum } from "@/components/charts/demand-bubb
 import DonutChart, { type DonutDatum } from "@/components/charts/donut-chart";
 import Section from "@/components/section";
 import PageHeader from "@/components/page-header";
+import { getServerLang } from "@/lib/server-i18n";
+import { DICT } from "@/lib/i18n";
 
 export const revalidate = 3600; // Refresca el radar cada hora (ISR)
 
@@ -52,6 +54,8 @@ function Stat({
 
 export default async function TendenciasPage() {
   const vacancies = await getVacancies();
+  const lang = await getServerLang();
+  const t = DICT[lang].trends;
 
   const active = activeVacancies(vacancies);
   const discarded = vacancies.length - active;
@@ -67,7 +71,7 @@ export default async function TendenciasPage() {
   }));
 
   // Embudo de descartes derivado de las vacantes (no toca la tabla interna `discards`).
-  const discardByReason: DonutDatum[] = discardReasonBreakdown(vacancies).map((r, i) => ({
+  const discardByReason: DonutDatum[] = discardReasonBreakdown(vacancies, lang).map((r, i) => ({
     label: r.label,
     value: r.value,
     color: DONUT_COLORS[i % DONUT_COLORS.length],
@@ -85,33 +89,33 @@ export default async function TendenciasPage() {
   return (
     <div className="flex flex-col gap-10">
       <PageHeader
-        eyebrow="El radar · lectura del mercado"
-        title="Tendencias"
-        highlight="del mercado"
-        subtitle="Señales del mercado: modalidad, seniority y descartes sobre las vacantes rastreadas."
+        eyebrow={t.eyebrow}
+        title={t.title}
+        highlight={t.highlight}
+        subtitle={t.subtitle}
         accent="var(--info)"
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Stat label="100% remoto — Colombia" value={remoteLabel("colombia")} note="Sobre las vacantes de Colombia" accent="var(--primary)" />
-        <Stat label="100% remoto — Resto" value={remoteLabel("rest")} note="Sobre las vacantes del resto" accent="var(--info)" />
-        <Stat label="Media de años mínimos — Colombia" value={avgMinLabel("colombia")} note="Requisito junior/mid" accent="var(--accent)" />
-        <Stat label="Media de años mínimos — Resto" value={avgMinLabel("rest")} note="Requisito junior/mid" accent="var(--warning)" />
-        <Stat label="Repost rate" value={`${repostPct}%`} note={`${active} vacantes activas`} accent="var(--success)" />
+        <Stat label={t.remoteCol} value={remoteLabel("colombia")} note={t.remoteNoteCol} accent="var(--primary)" />
+        <Stat label={t.remoteRest} value={remoteLabel("rest")} note={t.remoteNoteRest} accent="var(--info)" />
+        <Stat label={t.avgMinCol} value={avgMinLabel("colombia")} note={t.avgNote} accent="var(--accent)" />
+        <Stat label={t.avgMinRest} value={avgMinLabel("rest")} note={t.avgNote} accent="var(--warning)" />
+        <Stat label={t.repost} value={`${repostPct}%`} note={t.repostNote(active)} accent="var(--success)" />
       </div>
 
-      <Section title="Lo que más piden" subtitle="Frecuencia de tecnologías en las vacantes — cada blip es una tecnología, más grande = más pedida">
+      <Section title={t.topTitle} subtitle={t.topSubtitle}>
         <div className="rounded-xl border border-border bg-surface p-6">
           <DemandBubbles items={top} />
         </div>
       </Section>
 
-      <Section title="Embudo de descartes" subtitle="Señales de descarte derivadas de las vacantes">
+      <Section title={t.funnelTitle} subtitle={t.funnelSubtitle}>
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-3 gap-3">
-            <Stat label="Vacantes activas" value={String(active)} accent="var(--success)" />
-            <Stat label="Cerradas o vencidas" value={String(discarded)} accent="var(--text-muted)" />
-            <Stat label="Tasa de descarte" value={`${discardRate}%`} accent="var(--danger)" />
+            <Stat label={t.activeCount} value={String(active)} accent="var(--success)" />
+            <Stat label={t.closedCount} value={String(discarded)} accent="var(--text-muted)" />
+            <Stat label={t.discardRate} value={`${discardRate}%`} accent="var(--danger)" />
           </div>
 
           <div className="rounded-xl border border-border bg-surface p-6">

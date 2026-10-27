@@ -9,72 +9,31 @@ import {
   Badge,
   StatusBadge,
   WorkModeBadge,
-  WORK_MODE_META,
   type BadgeTone,
 } from "@/components/badge";
 import Section from "@/components/section";
+import { getServerLang } from "@/lib/server-i18n";
+import { DICT, yearsLabel } from "@/lib/i18n";
 
 export const revalidate = 3600;
 
 // El componente Badge solo expone tones success/info/warning/danger/muted.
 // Para el bloque usamos "warning" (ámbar, el tono más cercano al accent) en
 // Colombia y "info" (azul) en Resto, respetando los tokens sin opacidad.
-const BLOCK_META: Record<Block, { label: string; tone: BadgeTone }> = {
-  colombia: { label: "Colombia", tone: "warning" },
-  rest: { label: "Resto", tone: "info" },
+const BLOCK_TONE: Record<Block, BadgeTone> = {
+  colombia: "warning",
+  rest: "info",
 };
 
-function formatDate(iso: string | null): string | null {
+function formatDate(iso: string | null, lang: "es" | "en"): string | null {
   if (!iso) return null;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleDateString("es-ES", {
+  return date.toLocaleDateString(lang === "en" ? "en-US" : "es-ES", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
-}
-
-function yearsLabel(v: Vacancy): string {
-  const min = v.years_min;
-  const max = v.years_max;
-  if (min === null && max === null) return "Sin requisito de años";
-  if (min === null) return `Hasta ${max} años`;
-  if (max === null) return `${min}+ años`;
-  return min === max ? `${min} año` : `${min}–${max} años`;
-}
-
-interface DetailRow {
-  label: string;
-  value: string;
-}
-
-function buildDetails(v: Vacancy): DetailRow[] {
-  const remote =
-    v.remote_raw ??
-    (v.remote_countries && v.remote_countries.length > 0
-      ? v.remote_countries.join(", ")
-      : null);
-
-  const rows: DetailRow[] = [
-    // Años y Salario siempre se muestran (con fallback).
-    { label: "Años", value: v.years_raw ?? yearsLabel(v) },
-    { label: "Salario", value: v.salary_raw ?? "No publicado" },
-    { label: "Idioma", value: v.language_req ?? "" },
-    {
-      label: "Modalidad",
-      value: v.work_mode ? WORK_MODE_META[v.work_mode].label : "",
-    },
-    { label: "Remoto", value: remote ?? "" },
-    { label: "Portal", value: v.source_portal ?? "" },
-    { label: "Publicado", value: formatDate(v.published_date) ?? "" },
-    { label: "Primer avistamiento", value: formatDate(v.first_seen) ?? "" },
-    { label: "Último avistamiento", value: formatDate(v.last_seen) ?? "" },
-    { label: "Veces visto", value: String(v.times_seen) },
-    { label: "Repost", value: v.is_repost ? "Sí" : "No" },
-  ];
-
-  return rows.filter((r) => r.value !== "" && r.value !== null);
 }
 
 function ExternalLinkIcon() {
@@ -111,6 +70,40 @@ export async function generateMetadata({
   };
 }
 
+interface DetailRow {
+  label: string;
+  value: string;
+}
+
+function buildDetails(v: Vacancy, lang: "es" | "en"): DetailRow[] {
+  const t = DICT[lang].detail;
+  const common = DICT[lang].common;
+  const remote =
+    v.remote_raw ??
+    (v.remote_countries && v.remote_countries.length > 0
+      ? v.remote_countries.join(", ")
+      : null);
+
+  const rows: DetailRow[] = [
+    { label: t.years, value: v.years_raw ?? yearsLabel(lang, v.years_min, v.years_max) },
+    { label: t.salary, value: v.salary_raw ?? t.notPublished },
+    { label: t.language, value: v.language_req ?? "" },
+    {
+      label: t.mode,
+      value: v.work_mode ? common.workModes[v.work_mode] : "",
+    },
+    { label: t.remote, value: remote ?? "" },
+    { label: t.portal, value: v.source_portal ?? "" },
+    { label: t.published, value: formatDate(v.published_date, lang) ?? "" },
+    { label: t.firstSeen, value: formatDate(v.first_seen, lang) ?? "" },
+    { label: t.lastSeen, value: formatDate(v.last_seen, lang) ?? "" },
+    { label: t.timesSeen, value: String(v.times_seen) },
+    { label: t.repost, value: v.is_repost ? t.yes : t.no },
+  ];
+
+  return rows.filter((r) => r.value !== "" && r.value !== null);
+}
+
 export default async function VacancyDetailPage({
   params,
 }: {
@@ -120,6 +113,11 @@ export default async function VacancyDetailPage({
   const vacancy = await getVacancyById(id);
   if (!vacancy) notFound();
 
+  const lang = await getServerLang();
+  const t = DICT[lang].detail;
+  const common = DICT[lang].common;
+  const ct = DICT[lang].companies;
+
   const company = vacancy.company_id
     ? await getCompanyById(vacancy.company_id)
     : null;
@@ -127,7 +125,7 @@ export default async function VacancyDetailPage({
   const applyUrl = safeExternalUrl(vacancy.url ?? vacancy.alt_url);
   const required = vacancy.technologies.filter((t) => t.is_required);
   const optional = vacancy.technologies.filter((t) => !t.is_required);
-  const details = buildDetails(vacancy);
+  const details = buildDetails(vacancy, lang);
 
   return (
     <div className="flex flex-col gap-6">
@@ -136,7 +134,7 @@ export default async function VacancyDetailPage({
         className="inline-flex items-center gap-1.5 text-sm text-text-muted transition-colors hover:text-text"
       >
         <span aria-hidden="true">←</span>
-        Volver a vacantes
+        {t.back}
       </Link>
 
       <header className="rounded-xl border border-border bg-surface p-6">
@@ -144,8 +142,8 @@ export default async function VacancyDetailPage({
           <StatusBadge active={vacancy.is_active} />
           {vacancy.work_mode && <WorkModeBadge mode={vacancy.work_mode} />}
           {vacancy.block && (
-            <Badge tone={BLOCK_META[vacancy.block].tone}>
-              {BLOCK_META[vacancy.block].label}
+            <Badge tone={BLOCK_TONE[vacancy.block]}>
+              {vacancy.block === "colombia" ? common.colombia : common.rest}
             </Badge>
           )}
         </div>
@@ -154,7 +152,7 @@ export default async function VacancyDetailPage({
           {vacancy.title}
         </h1>
         <p className="mt-1 text-text-muted">
-          {[vacancy.company_name ?? "Empresa", vacancy.location]
+          {[vacancy.company_name ?? common.company, vacancy.location]
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -176,27 +174,27 @@ export default async function VacancyDetailPage({
             rel="noopener noreferrer"
             className="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-base font-semibold text-[#06281f] transition-colors hover:bg-primary-strong"
           >
-            Aplicar
+            {t.apply}
             <ExternalLinkIcon />
           </a>
         ) : (
           <p className="mt-5 text-sm text-text-muted">
-            Link de aplicación no disponible
+            {t.applyUnavailable}
           </p>
         )}
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          <Section title="Stack tecnológico">
+          <Section title={t.stackTitle}>
             {vacancy.technologies.length === 0 ? (
-              <p className="text-sm text-text-muted">Sin stack registrado</p>
+              <p className="text-sm text-text-muted">{t.noStack}</p>
             ) : (
               <div className="flex flex-col gap-4">
                 {required.length > 0 && (
                   <div>
                     <p className="mb-2 text-sm font-medium text-text-muted">
-                      Requeridas
+                      {t.required}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {required.map((t) => (
@@ -208,7 +206,7 @@ export default async function VacancyDetailPage({
                 {optional.length > 0 && (
                   <div>
                     <p className="mb-2 text-sm font-medium text-text-muted">
-                      Valoradas
+                      {t.valued}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {optional.map((t) => (
@@ -221,7 +219,7 @@ export default async function VacancyDetailPage({
             )}
           </Section>
 
-          <Section title="Detalles">
+          <Section title={t.detailsTitle}>
             <dl className="divide-y divide-border">
               {details.map((row) => (
                 <div
@@ -238,7 +236,7 @@ export default async function VacancyDetailPage({
 
         <aside className="flex flex-col gap-6">
           {company && (
-            <Section title="Empresa">
+            <Section title={t.companyTitle}>
               <div className="rounded-xl border border-border bg-surface p-5">
                 <h3 className="font-semibold">{company.name}</h3>
                 <p className="mt-1 text-sm text-text-muted">
@@ -252,7 +250,7 @@ export default async function VacancyDetailPage({
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary-strong"
                     >
-                      Web
+                      {ct.web}
                     </a>
                   )}
                   {company.careers_url && (
@@ -262,7 +260,7 @@ export default async function VacancyDetailPage({
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary-strong"
                     >
-                      Empleos
+                      {ct.jobs}
                     </a>
                   )}
                   {company.linkedin && (
@@ -272,7 +270,7 @@ export default async function VacancyDetailPage({
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary-strong"
                     >
-                      LinkedIn
+                      {ct.linkedin}
                     </a>
                   )}
                 </div>
@@ -285,7 +283,7 @@ export default async function VacancyDetailPage({
             </Section>
           )}
 
-          <Section title="Aplicar">
+          <Section title={t.applyTitle}>
             <div className="rounded-xl border border-border bg-surface p-5">
               {applyUrl ? (
                 <a
@@ -294,14 +292,14 @@ export default async function VacancyDetailPage({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-base font-semibold text-[#06281f] transition-colors hover:bg-primary-strong"
                 >
-                  Aplicar
+                  {t.apply}
                   <ExternalLinkIcon />
                 </a>
               ) : (
-                <p className="text-sm text-text-muted">Link no disponible</p>
+                <p className="text-sm text-text-muted">{t.noLink}</p>
               )}
               <p className="mt-3 text-xs text-text-muted">
-                Redirige al portal original de la oferta.
+                {t.redirectNote}
               </p>
             </div>
           </Section>

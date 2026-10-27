@@ -4,6 +4,8 @@ import type { Company } from "@/lib/types";
 import { Badge } from "@/components/badge";
 import Pagination from "@/components/pagination";
 import PageHeader from "@/components/page-header";
+import { getServerLang } from "@/lib/server-i18n";
+import { DICT, type Lang } from "@/lib/i18n";
 
 export const revalidate = 3600; // Refresca el radar cada hora (ISR)
 
@@ -47,7 +49,8 @@ const LEVEL_COLORS: Record<string, string> = {
   baja: "var(--text-muted)",
 };
 
-function CompanyCard({ company }: { company: Company }) {
+function CompanyCard({ company, lang }: { company: Company; lang: Lang }) {
+  const t = DICT[lang].companies;
   const signals = parseSignals(company.signals);
   const website = safeExternalUrl(company.website);
   const careersUrl = safeExternalUrl(company.careers_url);
@@ -62,9 +65,9 @@ function CompanyCard({ company }: { company: Company }) {
           </p>
         </div>
         {company.open_de_roles ? (
-          <Badge tone="success">Roles DE abiertos</Badge>
+          <Badge tone="success">{t.rolesOpen}</Badge>
         ) : (
-          <Badge tone="muted">Sin roles abiertos</Badge>
+          <Badge tone="muted">{t.noRoles}</Badge>
         )}
       </div>
 
@@ -75,7 +78,7 @@ function CompanyCard({ company }: { company: Company }) {
             style={{ backgroundColor: LEVEL_COLORS[signals.level] ?? "var(--text-muted)" }}
             aria-hidden="true"
           />
-          <span>Actividad {signals.level}</span>
+          <span>{t.activity(signals.level)}</span>
           <span className="text-text-muted">·</span>
           <span className="truncate">{signals.source}</span>
         </div>
@@ -93,7 +96,7 @@ function CompanyCard({ company }: { company: Company }) {
             rel="noopener noreferrer"
             className="text-primary hover:text-primary-strong"
           >
-            Web
+            {t.web}
           </a>
         )}
         {careersUrl && (
@@ -103,7 +106,7 @@ function CompanyCard({ company }: { company: Company }) {
             rel="noopener noreferrer"
             className="text-primary hover:text-primary-strong"
           >
-            Empleos
+            {t.jobs}
           </a>
         )}
         {linkedin && (
@@ -113,7 +116,7 @@ function CompanyCard({ company }: { company: Company }) {
             rel="noopener noreferrer"
             className="text-primary hover:text-primary-strong"
           >
-            LinkedIn
+            {t.linkedin}
           </a>
         )}
       </div>
@@ -130,20 +133,22 @@ export default async function EmpresasPage({
   const page = parsePage(sp.page);
   const size = parseSize(sp.size);
   const result = await getCompaniesPage(page, size);
+  const lang = await getServerLang();
+  const t = DICT[lang].companies;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        eyebrow="El radar · quién contrata"
-        title="Empresas"
-        highlight="en la mira"
-        subtitle="Empresas de LATAM y España rastreadas por sus roles de data remotos."
+        eyebrow={t.eyebrow}
+        title={t.title}
+        highlight={t.highlight}
+        subtitle={t.subtitle}
         accent="var(--accent)"
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {result.items.map((c) => (
-          <CompanyCard key={c.id} company={c} />
+          <CompanyCard key={c.id} company={c} lang={lang} />
         ))}
       </div>
 

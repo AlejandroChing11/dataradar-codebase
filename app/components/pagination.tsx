@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Select, { type SelectOption } from "./select";
+import { useLang } from "@/components/providers";
+import { DICT } from "@/lib/i18n";
 
 const DEFAULT_PER_PAGE_OPTIONS = [12, 24, 48];
 
@@ -42,6 +44,8 @@ export default function Pagination({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { lang } = useLang();
+  const t = DICT[lang].pagination;
 
   // Arma un href preservando los params actuales y aplicando solo el patch.
   function hrefFor(patch: Record<string, string | null>): string {
@@ -64,7 +68,7 @@ export default function Pagination({
 
   const sizeOptions: SelectOption[] = perPageOptions.map((n) => ({
     value: String(n),
-    label: `${n} por página`,
+    label: t.perPageOption(n),
   }));
 
   const pages = pageItems(page, totalPages);
@@ -75,26 +79,26 @@ export default function Pagination({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-text-muted">
           {total === 0
-            ? "0 resultados"
-            : `Mostrando ${start}–${end} de ${total} resultado${total === 1 ? "" : "s"}`}
+            ? t.zeroResults
+            : t.showing(start, end, total)}
         </p>
 
         <div className="flex items-center gap-2 text-xs text-text-muted">
-          <span>Por página</span>
+          <span>{t.perPage}</span>
           <Select
             value={String(perPage)}
             onChange={(v) =>
               router.replace(hrefFor({ size: v, page: "1" }), { scroll: false })
             }
             options={sizeOptions}
-            ariaLabel="Resultados por página"
+            ariaLabel={t.perPageAria}
           />
         </div>
       </div>
 
       {showNumberBar && (
         <nav
-          aria-label="Paginación"
+          aria-label={t.paginationAria}
           className="flex flex-wrap items-center justify-center gap-1.5"
         >
           <Link
@@ -106,7 +110,7 @@ export default function Pagination({
                 : "text-text hover:bg-surface-2"
             }`}
           >
-            Anterior
+            {t.previous}
           </Link>
 
           {pages.map((item, i) =>
@@ -142,7 +146,7 @@ export default function Pagination({
                 : "text-text hover:bg-surface-2"
             }`}
           >
-            Siguiente
+            {t.next}
           </Link>
         </nav>
       )}

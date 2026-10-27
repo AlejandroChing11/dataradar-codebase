@@ -1,5 +1,6 @@
 import type { Block, Company, VacancyWithStack, WorkMode } from "./types";
 import { daysAgo, isWithinLastDays, today } from "./dates";
+import { DICT, type Lang } from "./i18n";
 
 // Funciones puras de analítica sobre los datos ya resueltos (mocks o Supabase).
 // Los tipos de retorno son explícitos para que la capa de datos y las vistas
@@ -135,8 +136,10 @@ export function avgYearsMinByBlock(
 
 // Aproximación razonable y derivada del embudo de descartes para la vista de Tendencias.
 export function discardReasonBreakdown(
-  vacancies: VacancyWithStack[]
+  vacancies: VacancyWithStack[],
+  lang: Lang = "es"
 ): DiscardReason[] {
+  const t = DICT[lang].trends.discardReasons;
   const inactive = vacancies.filter((v) => !v.is_active).length;
   const reposts = vacancies.filter((v) => v.is_repost).length;
   const notFullyRemote = vacancies.filter(
@@ -146,9 +149,9 @@ export function discardReasonBreakdown(
     (v.language_req ?? "").toLowerCase().includes("avanzado")
   ).length;
   return [
-    { label: "Cerradas o vencidas", value: inactive },
-    { label: "Duplicadas (repost)", value: reposts },
-    { label: "No 100% remotas", value: notFullyRemote },
-    { label: "Inglés avanzado exigido", value: englishAdvanced },
+    { label: t.closed, value: inactive },
+    { label: t.repost, value: reposts },
+    { label: t.notRemote, value: notFullyRemote },
+    { label: t.english, value: englishAdvanced },
   ];
 }
